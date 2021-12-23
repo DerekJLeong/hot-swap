@@ -27,6 +27,7 @@ describe("NFTMarket", function() {
     await market.createMarketItem(nftContractAddress, 2, auctionPrice, { value: listingPriceString })
     
     const createdNfts = await market.fetchItemsCreated()
+    console.log('Created NFTs', createdNfts);
     expect(createdNfts.length).to.equal(2);
 
     const [_, buyerAddress] = await ethers.getSigners()
@@ -45,8 +46,9 @@ describe("NFTMarket", function() {
       }
       return nftData
     }))
-    const firstMarketItemWithUri = marketItemsWithUri[0]
-    expect(firstMarketItemWithUri.tokenUri).to.equal(token2)
-    expect(firstMarketItemWithUri.tokenId).to.equal("2")
+    const firstMarketItem = marketItemsWithUri[0]
+    console.log('First Market Item', firstMarketItem);
+    expect(firstMarketItem.tokenUri).to.equal(token2)
+    expect(firstMarketItem.tokenId).to.equal("2")
   })
 })
