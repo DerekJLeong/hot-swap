@@ -1,3 +1,13 @@
 module.exports = {
-  reactStrictMode: true,
-}
+   reactStrictMode: true,
+   env: {
+      APP_PUBLIC_WORKSPACE_URL: process.env.APP_PUBLIC_WORKSPACE_URL,
+      MARKET_ADDRESS: process.env.MARKET_ADDRESS,
+      NFT_ADDRESS: process.env.NFT_ADDRESS,
+      IPFS_CLIENT_URL: process.env.IPFS_CLIENT_URL,
+      IPFS_BASE_URL: process.env.IPFS_BASE_URL,
+   },
+   images: {
+      domains: [process.env.IPFS_HOSTNAME],
+   },
+};
