@@ -113,7 +113,7 @@ contract Market is ReentrancyGuard {
         return items;
     }
 
-    function fetchItemsCreated() public view returns (MarketItem[] memory) {
+    function fetchMyItems() public view returns (MarketItem[] memory) {
         uint256 totalItemCount = _itemIds.current();
         uint256 itemCount = 0;
         uint256 currentIndex = 0;

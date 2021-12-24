@@ -132,3 +132,38 @@ export const loadNFTs = async () => {
    );
    return marketItemsMapped;
 };
+
+export const fetchMyNFTs = async () => {
+   const web3Modal = new Web3Modal();
+   const connection = await web3Modal.connect();
+   const provider = new ethers.providers.Web3Provider(connection);
+   const signer = provider.getSigner();
+
+   const marketContract = new ethers.Contract(
+      MARKET_ADDRESS,
+      Market.abi,
+      signer
+   );
+   const tokenContract = new ethers.Contract(NFT_ADDRESS, NFT.abi, provider);
+   const myNfts = await marketContract.fetchMyItems();
+
+   const myNFTsMapped = await Promise.all(
+      myNfts.map(async ({ price, tokenId, seller, owner }) => {
+         const tokenUri = await tokenContract.tokenURI(tokenId);
+         const meta = await axios.get(tokenUri);
+         const priceFormatted = ethers.utils.formatUnits(
+            price.toString(),
+            "ether"
+         );
+         const nftData = {
+            price: priceFormatted,
+            tokenId: tokenId.toNumber(),
+            seller: seller,
+            owner: owner,
+            image: meta.data.image,
+         };
+         return nftData;
+      })
+   );
+   return myNFTsMapped;
+};
