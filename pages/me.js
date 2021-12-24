@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { fetchMyNFTs, listNftForSale } from "/utils/abi";
+import { fetchMyNFTs, listNftForSale, removeSaleListing } from "/utils/abi";
+
+const getMarketStatus = (nft) =>
+   nft.sold ? "Sold" : nft.forSale ? "Remove Listing" : "List For Sale";
 
 const Create = () => {
+   const router = useRouter();
    const [nfts, setNfts] = useState([]);
    const [isLoading, setLoadingState] = useState(false);
 
@@ -14,15 +18,29 @@ const Create = () => {
    };
 
    const handleListNftForSale = async (nft) => {
-      const { tokenId } = nft;
-      const { price } = formInput;
-      await listNftForSale(tokenId, price);
+      const { tokenId, price } = nft;
+      // const { price } = formInput;
+      const convertedPrice = price ? Number(price) : 1; //TODO if no price enter price
+      await listNftForSale(tokenId, convertedPrice);
       router.push("/");
+   };
+
+   const handleRemoveSaleListing = async (nft) => {
+      if (nft.sold) return;
+      const { tokenId } = nft;
+      await removeSaleListing(tokenId);
+      router.push("/");
+   };
+
+   const handleCardButtonClick = (nft) => {
+      nft.forSale ? handleRemoveSaleListing(nft) : handleListNftForSale(nft);
    };
 
    useEffect(() => {
       handleLoadNfts();
    }, []);
+
+   console.log("My NFTs", nfts);
    return (
       <div className="flex justify-center">
          <main className="w-full mr-10 ml-10 max-w-screen-2xl">
@@ -56,9 +74,9 @@ const Create = () => {
                               </p>
                               <button
                                  className="w-full bg-orange-500 text-white font-bold py-2 px-12 rounded shadow"
-                                 onClick={() => handleListNftForSale(nft)}
+                                 onClick={() => handleCardButtonClick(nft)}
                               >
-                                 List For Sale
+                                 {getMarketStatus(nft)}
                               </button>
                            </div>
                         </div>

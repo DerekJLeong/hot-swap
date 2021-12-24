@@ -36,6 +36,31 @@ export const ipfsClientAdd = async (fileData) => {
    }
 };
 
+export const createMarketItem = async (tokenId, price) => {
+   const web3Modal = new Web3Modal();
+   const connection = await web3Modal.connect();
+   const provider = new ethers.providers.Web3Provider(connection);
+   const signer = provider.getSigner();
+   /* list the item for sale on the marketplace */
+   const marketContract = new ethers.Contract(
+      MARKET_ADDRESS,
+      Market.abi,
+      signer
+   );
+   const priceParsed = ethers.utils.parseUnits(price, "ether");
+   const listingPrice = await marketContract.getListingPrice();
+   const listingPriceString = listingPrice.toString();
+   const transaction = await marketContract.createMarketItem(
+      NFT_ADDRESS,
+      tokenId,
+      priceParsed,
+      {
+         value: listingPriceString,
+      }
+   );
+   await transaction.wait();
+};
+
 export const createNft = async (url) => {
    const web3Modal = new Web3Modal();
    const connection = await web3Modal.connect();
@@ -63,11 +88,10 @@ export const listNftForSale = async (tokenId, price) => {
       Market.abi,
       signer
    );
-   const priceParsed = ethers.utils.parseUnits(price, "ether");
    const listingPrice = await marketContract.getListingPrice();
    const listingPriceString = listingPrice.toString();
-   const transaction = await marketContract.createMarketItem(
-      NFT_ADDRESS,
+   const priceParsed = ethers.utils.parseUnits(price.toString(), "ether");
+   const transaction = await marketContract.listItemForSale(
       tokenId,
       priceParsed,
       {
@@ -77,15 +101,38 @@ export const listNftForSale = async (tokenId, price) => {
    await transaction.wait();
 };
 
+export const removeSaleListing = async (tokenId) => {
+   const web3Modal = new Web3Modal();
+   const connection = await web3Modal.connect();
+   const provider = new ethers.providers.Web3Provider(connection);
+   const signer = provider.getSigner();
+   /* list the item for sale on the marketplace */
+   const marketContract = new ethers.Contract(
+      MARKET_ADDRESS,
+      Market.abi,
+      signer
+   );
+   const listingPrice = await marketContract.getListingPrice();
+   const listingPriceString = listingPrice.toString();
+   const transaction = await marketContract.removeSaleListing(tokenId, {
+      value: listingPriceString,
+   });
+   await transaction.wait();
+};
+
 export const purchaseNft = async (nft) => {
    const web3Modal = new Web3Modal();
    const connection = await web3Modal.connect();
    const provider = new ethers.providers.Web3Provider(connection);
    const signer = provider.getSigner();
-   const contract = new ethers.Contract(MARKET_ADDRESS, Market.abi, signer);
+   const marketContract = new ethers.Contract(
+      MARKET_ADDRESS,
+      Market.abi,
+      signer
+   );
 
    const price = ethers.utils.parseUnits(nft.price.toString(), "ether");
-   const transaction = await contract.createMarketSale(
+   const transaction = await marketContract.executeMarketSale(
       NFT_ADDRESS,
       nft.itemId,
       {
@@ -107,7 +154,7 @@ export const loadNFTs = async () => {
 
    const marketItemsMapped = await Promise.all(
       marketItemsFromResponse.map(
-         async ({ price, itemId, tokenId, seller, owner }) => {
+         async ({ price, itemId, tokenId, seller, owner, sold, forSale }) => {
             const tokenUri = await tokenContract.tokenURI(tokenId);
             const meta = await axios.get(tokenUri);
             const metaData = meta?.data;
@@ -125,6 +172,8 @@ export const loadNFTs = async () => {
                tokenUri,
                image,
                name,
+               sold,
+               forSale,
             };
             return nftData;
          }
@@ -148,9 +197,11 @@ export const fetchMyNFTs = async () => {
    const myNfts = await marketContract.fetchMyItems();
 
    const myNFTsMapped = await Promise.all(
-      myNfts.map(async ({ price, tokenId, seller, owner }) => {
+      myNfts.map(async ({ price, tokenId, seller, owner, sold, forSale }) => {
          const tokenUri = await tokenContract.tokenURI(tokenId);
          const meta = await axios.get(tokenUri);
+         const metaData = meta?.data;
+         const { image, name, description } = metaData;
          const priceFormatted = ethers.utils.formatUnits(
             price.toString(),
             "ether"
@@ -160,7 +211,11 @@ export const fetchMyNFTs = async () => {
             tokenId: tokenId.toNumber(),
             seller: seller,
             owner: owner,
-            image: meta.data.image,
+            image,
+            name,
+            description,
+            sold,
+            forSale,
          };
          return nftData;
       })

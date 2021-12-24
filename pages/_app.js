@@ -23,11 +23,6 @@ function MyApp({ Component, pageProps }) {
                      My Assets
                   </a>
                </Link>
-               <Link href="/sell">
-                  <a className="mr-6 font-semibold text-l text-orange-500">
-                     Sell
-                  </a>
-               </Link>
                <Link href="/create">
                   <a className="mr-6 font-semibold text-l text-orange-500">
                      Create

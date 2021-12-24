@@ -15,6 +15,7 @@ const Home = () => {
    };
 
    const handlePurchaseNft = async (nft) => {
+      if (nft.sold) return;
       !isLoading && setLoadingState(true);
       await purchaseNft(nft);
       handleLoadNfts();
@@ -24,6 +25,7 @@ const Home = () => {
       handleLoadNfts();
    }, []);
 
+   console.log("NFTS on Market", nfts);
    return (
       <div className="flex justify-center">
          <main className="w-full mr-10 ml-10 max-w-screen-2xl">
@@ -36,33 +38,36 @@ const Home = () => {
                )}
                {!isLoading &&
                   nfts.length &&
-                  nfts.map((nft, index) => (
-                     <div
-                        className="border shadow rounded-xl overflow-hidden max-w-l h-fit bg-gray-100"
-                        key={index}
-                     >
-                        <img src={nft.image} />
-                        <div className="p-4">
-                           <h3 className="h12 text-2xl font-semibold">
-                              {nft.name}
-                           </h3>
-                           <p className="h24 p-4 overflow-hidden">
-                              {nft.description}
-                           </p>
-                           <div className="bg-white p-4 rounded-lg">
-                              <p className="text-gray-600 text-2xl font-bold mb-4 text-center">
-                                 {nft.price} Matic
-                              </p>
-                              <button
-                                 className="w-full bg-orange-500 text-white font-bold py-2 px-12 rounded shadow"
-                                 onClick={() => handlePurchaseNft(nft)}
-                              >
-                                 Buy
-                              </button>
+                  nfts.map(
+                     (nft, index) =>
+                        nft.forSale && (
+                           <div
+                              className="border shadow rounded-xl overflow-hidden max-w-l h-fit bg-gray-100"
+                              key={index}
+                           >
+                              <img src={nft.image} />
+                              <div className="">
+                                 <h3 className="h12 text-2xl font-semibold">
+                                    {nft.name}
+                                 </h3>
+                                 <p className="h24 p-4 overflow-hidden">
+                                    {nft.description}
+                                 </p>
+                                 <div className="bg-white p-4 rounded-lg">
+                                    <p className="text-gray-600 text-2xl font-bold mb-4 text-center">
+                                       {nft.price} Matic
+                                    </p>
+                                    <button
+                                       className="w-full bg-orange-500 text-white font-bold py-2 px-12 rounded shadow"
+                                       onClick={() => handlePurchaseNft(nft)}
+                                    >
+                                       {nft.sold ? "Sold" : "Buy"}
+                                    </button>
+                                 </div>
+                              </div>
                            </div>
-                        </div>
-                     </div>
-                  ))}
+                        )
+                  )}
             </section>
          </main>
 

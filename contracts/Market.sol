@@ -26,6 +26,7 @@ contract Market is ReentrancyGuard {
         address payable seller;
         address payable owner;
         uint256 price;
+        bool forSale;
         bool sold;
     }
 
@@ -38,6 +39,7 @@ contract Market is ReentrancyGuard {
         address seller,
         address owner,
         uint256 price,
+        bool forSale,
         bool sold
     );
 
@@ -50,11 +52,12 @@ contract Market is ReentrancyGuard {
         uint256 tokenId,
         uint256 price
     ) public payable nonReentrant {
-        require(price > 0, "Price must be at least 1wei");
-        require(msg.value == listingPrice, "Price must equal listing price");
-
         _itemIds.increment();
         uint256 itemId = _itemIds.current();
+        uint256 itemPrice = 0;
+        if (price > 0) {
+            itemPrice = price;
+        }
 
         idToMarketItem[itemId] = MarketItem(
             itemId,
@@ -63,6 +66,7 @@ contract Market is ReentrancyGuard {
             payable(msg.sender),
             payable(address(0)),
             price,
+            false,
             false
         );
 
@@ -75,11 +79,34 @@ contract Market is ReentrancyGuard {
             msg.sender,
             address(0),
             price,
+            false,
             false
         );
     }
 
-    function createMarketSale(address nftContract, uint256 itemId)
+    function listItemForSale(uint256 itemId, uint256 price)
+        public
+        payable
+        nonReentrant
+    {
+        bool forSaleStatus = idToMarketItem[itemId].forSale;
+        require(forSaleStatus != true, "Item already for sale");
+        require(price > 0, "Price must be at least 1wei");
+        require(msg.value == listingPrice, "Fee must equal listing price");
+
+        idToMarketItem[itemId].forSale = true;
+        idToMarketItem[itemId].price = price;
+    }
+
+    function removeSaleListing(uint256 itemId) public payable nonReentrant {
+        bool forSaleStatus = idToMarketItem[itemId].forSale;
+        require(forSaleStatus != false, "Item already NOT for sale");
+        require(msg.value == listingPrice, "Fee must equal listing price");
+
+        idToMarketItem[itemId].forSale = false;
+    }
+
+    function executeMarketSale(address nftContract, uint256 itemId)
         public
         payable
         nonReentrant
@@ -110,6 +137,7 @@ contract Market is ReentrancyGuard {
                 currentIndex += 1;
             }
         }
+
         return items;
     }
 
@@ -119,14 +147,20 @@ contract Market is ReentrancyGuard {
         uint256 currentIndex = 0;
 
         for (uint256 i = 0; i < totalItemCount; i++) {
-            if (idToMarketItem[i + 1].seller == msg.sender) {
+            if (
+                idToMarketItem[i + 1].seller == msg.sender ||
+                idToMarketItem[i + 1].owner == msg.sender
+            ) {
                 itemCount += 1;
             }
         }
 
         MarketItem[] memory items = new MarketItem[](itemCount);
         for (uint256 i = 0; i < totalItemCount; i++) {
-            if (idToMarketItem[i + 1].seller == msg.sender) {
+            if (
+                idToMarketItem[i + 1].seller == msg.sender ||
+                idToMarketItem[i + 1].owner == msg.sender
+            ) {
                 uint256 currentId = i + 1;
                 MarketItem storage currentItem = idToMarketItem[currentId];
                 items[currentIndex] = currentItem;

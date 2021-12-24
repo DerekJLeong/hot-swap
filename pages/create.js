@@ -4,7 +4,7 @@ import {
    ipfsClientAdd,
    ipfsClientAddWithProgress,
    createNft,
-   listNftForSale,
+   createMarketItem,
 } from "/utils/abi";
 
 const Create = () => {
@@ -38,15 +38,15 @@ const Create = () => {
       setTokenId(tokenId);
    };
 
-   const handleListNftForSale = async () => {
+   const handleCreateMarketItem = async () => {
       const { price } = formInput;
-      await listNftForSale(tokenId, price);
+      await createMarketItem(tokenId, price);
       router.push("/");
    };
 
    return (
       <div className="flex justify-center">
-         <div className="w-1/2 flex flex-col pb-12">
+         <form className="w-1/2 flex flex-col pb-12">
             <input
                placeholder="Asset Name"
                className="mt-8 border rounded p-4"
@@ -78,6 +78,7 @@ const Create = () => {
                <img className="rounded mt-4" width="350" src={fileUrl} />
             )}
             <button
+               type="button"
                disabled={tokenId}
                onClick={handleCreateNft}
                className={`font-bold mt-4 text-white rounded p-4 shadow-lg ${
@@ -87,16 +88,16 @@ const Create = () => {
                {tokenId ? "NFT Created Successfully!" : "Create NFT"}
             </button>
             <button
-               disabled={!tokenId}
                type="button"
-               onClick={handleListNftForSale}
+               disabled={!tokenId}
+               onClick={handleCreateMarketItem}
                className={`font-bold mt-4 text-white rounded p-4 shadow-lg ${
                   !tokenId ? "bg-gray-300" : "bg-orange-500"
                }`}
             >
                List On Market
             </button>
-         </div>
+         </form>
       </div>
    );
 };
