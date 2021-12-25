@@ -1,4 +1,5 @@
-import { useContext, useReducer, createContext } from "react";
+import { useContext, useEffect, useReducer, createContext } from "react";
+import { setCookie } from "/utils/cookie";
 
 export const GlobalStateContext = createContext();
 export const DispatchContext = createContext();
@@ -6,6 +7,11 @@ export const DispatchContext = createContext();
 const modal = "";
 const user = {};
 const initialState = { user, modal };
+const buildIntialPersistedState = (stateInCookie) => {
+   console.log("stateInCookie", stateInCookie);
+   const intialPersistedState = { ...initialState, ...stateInCookie };
+   return intialPersistedState;
+};
 
 export const reducer = (globalState, action) => {
    switch (action.type) {
@@ -28,8 +34,14 @@ export const reducer = (globalState, action) => {
    }
 };
 
-export const GlobalStateProvider = ({ children }) => {
-   const [globalState, dispatch] = useReducer(reducer, initialState);
+export const GlobalStateProvider = ({ children, persistedState }) => {
+   const intialPersistedState = buildIntialPersistedState(persistedState);
+   const [globalState, dispatch] = useReducer(reducer, intialPersistedState);
+
+   useEffect(() => {
+      setCookie("persistedState", JSON.stringify(globalState));
+   }, [globalState]);
+
    return (
       <GlobalStateContext.Provider value={globalState}>
          <DispatchContext.Provider value={dispatch}>

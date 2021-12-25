@@ -3,28 +3,32 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { initWeb3Auth, removeAccountData } from "/utils/web3Auth";
 import { useGlobalState, useDispatch } from "/utils/store";
+import { removeCookie } from "/utils/cookie";
 
 const Header = ({}) => {
    const router = useRouter();
    const globalState = useGlobalState();
    const dispatch = useDispatch();
+   const activeUser = !!globalState.user?.accounts?.length;
+
    const handleWeb3Login = async () => {
       const user = await initWeb3Auth();
       const action = { type: "SET_USER", payload: user };
       dispatch(action);
    };
+
    const handleWeb3Logout = async () => {
       await removeAccountData();
       const action = { type: "RESET" };
       dispatch(action);
+      removeCookie("persistedState");
       router.push("/me");
    };
-   const { user } = globalState;
-   const activeUser = !!user?.accounts?.length;
+
    useEffect(() => {
       !activeUser && handleWeb3Login();
    }, []);
-   console.log("globalState", globalState, activeUser);
+
    return (
       <header className="border-b p-6">
          <h1 className="text-4xl font-bold">Hot Swap</h1>
