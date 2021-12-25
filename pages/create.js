@@ -12,10 +12,14 @@ const Create = () => {
    const [tokenId, setTokenId] = useState("");
    const [fileUrl, setFileUrl] = useState(null);
    const [formInput, setFormInput] = useState({
-      price: "",
       name: "",
       description: "",
+      externalLink: "",
+      properties: {},
+      price: "",
    });
+   const handleFormInputChange = (event) =>
+      setFormInput({ ...formInput, [event.target.name]: event.target.value });
 
    const handleFileChange = async (event) => {
       const fileData = event.target.files[0];
@@ -24,49 +28,55 @@ const Create = () => {
    };
 
    const handleCreateNft = async () => {
-      const { name, description, price } = formInput;
-      if (!name || !description || !price || !fileUrl)
+      const { name, description, externalLink, properties, price } = formInput;
+      console.log("formInput", formInput);
+      if (!name || !description || !fileUrl)
          return console.error("Missing Info");
       /* first, upload to IPFS */
       const fileData = JSON.stringify({
+         image: fileUrl,
          name,
          description,
-         image: fileUrl,
+         externalLink,
+         properties,
       });
+      const initialPrice = price || 0;
+      //TODO LOADING MODAL step 1
       const nftLocation = await ipfsClientAdd(fileData);
+      //TODO LOADING MODAL step 2
       const tokenId = await createNft(nftLocation);
-      setTokenId(tokenId);
-   };
-
-   const handleCreateMarketItem = async () => {
-      const { price } = formInput;
-      await createMarketItem(tokenId, price);
-      router.push("/");
+      //TODO LOADING MODAL step 3
+      await createMarketItem(tokenId, initialPrice);
+      //TODO LOADING MODAL steps completed
+      router.push("/me");
    };
 
    return (
       <div className="flex justify-center">
          <form className="w-1/2 flex flex-col pb-12">
             <input
+               name="name"
                placeholder="Asset Name"
                className="mt-8 border rounded p-4"
-               onChange={(e) =>
-                  setFormInput({ ...formInput, name: e.target.value })
-               }
+               onChange={handleFormInputChange}
             />
             <textarea
+               name="description"
                placeholder="Asset Description"
                className="mt-2 border rounded p-4"
-               onChange={(e) =>
-                  setFormInput({ ...formInput, description: e.target.value })
-               }
+               onChange={handleFormInputChange}
             />
             <input
-               placeholder="Asset Price in Eth"
+               name="externalLink"
+               placeholder="External Link"
                className="mt-2 border rounded p-4"
-               onChange={(e) =>
-                  setFormInput({ ...formInput, price: e.target.value })
-               }
+               onChange={handleFormInputChange}
+            />
+            <input
+               name="price"
+               placeholder="Price"
+               className="mt-2 border rounded p-4"
+               onChange={handleFormInputChange}
             />
             <input
                type="file"
@@ -85,17 +95,7 @@ const Create = () => {
                   tokenId ? "bg-orange-300" : "bg-orange-500"
                }`}
             >
-               {tokenId ? "NFT Created Successfully!" : "Create NFT"}
-            </button>
-            <button
-               type="button"
-               disabled={!tokenId}
-               onClick={handleCreateMarketItem}
-               className={`font-bold mt-4 text-white rounded p-4 shadow-lg ${
-                  !tokenId ? "bg-gray-300" : "bg-orange-500"
-               }`}
-            >
-               List On Market
+               {tokenId ? "NFT Minted Successfully!" : "Initiate Mint"}
             </button>
          </form>
       </div>
