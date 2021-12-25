@@ -158,8 +158,14 @@ export const loadNFTs = async () => {
             const tokenUri = await tokenContract.tokenURI(tokenId);
             const meta = await axios.get(tokenUri);
             const metaData = meta?.data;
-            const { image, name, description, externalLink, properties } =
-               metaData;
+            const {
+               image,
+               name,
+               description,
+               externalLink,
+               collection,
+               properties,
+            } = metaData;
             const priceFormatted = ethers.utils.formatUnits(
                price.toString(),
                "ether"
@@ -171,6 +177,7 @@ export const loadNFTs = async () => {
                owner: owner,
                externalLink,
                description,
+               collection,
                properties,
                tokenUri,
                forSale,
@@ -204,8 +211,14 @@ export const fetchMyNFTs = async () => {
          const tokenUri = await tokenContract.tokenURI(tokenId);
          const meta = await axios.get(tokenUri);
          const metaData = meta?.data;
-         const { image, name, description, externalLink, properties } =
-            metaData;
+         const {
+            image,
+            name,
+            description,
+            externalLink,
+            collection,
+            properties,
+         } = metaData;
          const priceFormatted = ethers.utils.formatUnits(
             price.toString(),
             "ether"
@@ -217,6 +230,7 @@ export const fetchMyNFTs = async () => {
             owner: owner,
             image,
             name,
+            collection,
             description,
             sold,
             forSale,
