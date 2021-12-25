@@ -1,5 +1,8 @@
+import { useEffect, useCallback } from "react";
 import Web3 from "web3";
 import Web3Modal from "web3modal";
+import WalletLink from "walletlink";
+import { ethers } from "ethers";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
 const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID || "";
@@ -10,59 +13,68 @@ const providerOptions = {
          infuraId: INFURA_PROJECT_ID,
       },
    },
+   "custom-walletlink": {
+      display: {
+         logo: "https://play-lh.googleusercontent.com/PjoJoG27miSglVBXoXrxBSLveV6e3EeBPpNY55aiUUBM9Q1RCETKCOqdOkX2ZydqVf0",
+         name: "Coinbase",
+         description: "Connect to Coinbase Wallet (not Coinbase App)",
+      },
+      options: {
+         appName: "Coinbase",
+         networkUrl: `https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`,
+         chainId: 1,
+      },
+      package: WalletLink,
+      connector: async (_, options) => {
+         const { appName, networkUrl, chainId } = options;
+         const walletLink = new WalletLink({
+            appName,
+         });
+         const provider = walletLink.makeWeb3Provider(networkUrl, chainId);
+         await provider.enable();
+         return provider;
+      },
+   },
 };
 
-let web3Modal;
-let provider;
+export let web3Modal;
+export let connection;
+export let provider;
 
-export const initWeb3Auth = async () => {
+export const connect = async () => {
    web3Modal = new Web3Modal({
       cacheProvider: true,
       providerOptions,
    });
+   // connection that is returned when
+   // using web3Modal to connect. Can be MetaMask or WalletConnect.
    try {
-      provider = await web3Modal.connect();
+      connection = await web3Modal.connect();
+      // We plug the initial `provider` into ethers.js and get back
+      // a Web3Provider. This will add on methods from ethers.js and
+      // event listeners such as `.on()` will be different.
+      provider = new ethers.providers.Web3Provider(connection);
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      const network = await provider.getNetwork();
+      const { chainId } = network;
+      console.log("CONNECTED", chainId, signer, address, provider);
+
+      return { address, chainId };
    } catch (error) {
       return console.error("Could not get a wallet connection", error);
    }
-
-   // Subscribe to accounts change
-   provider.on("accountsChanged", (accounts) => {
-      fetchAccountData();
-   });
-
-   // Subscribe to chainId change
-   provider.on("chainChanged", (chainId) => {
-      fetchAccountData();
-   });
-   return fetchAccountData();
 };
 
-/**
- * Kick in the UI action after Web3modal dialog has chosen a provider
- */
-const fetchAccountData = async () => {
-   // Get a Web3 instance for the wallet
-   const web3 = new Web3(provider);
-   console.log("Web3 instance is", web3);
-   // Get connected chain id from Ethereum node
-   const chainId = await web3.eth.getChainId();
-   // Get accounts on wallet
-   // MetaMask does not give you all accounts, only the selected account
-   const accounts = await web3.eth.getAccounts();
-   return { accounts, chainId };
-};
-
-export const removeAccountData = async () => {
-   if (provider.disconnect) {
-      await provider.disconnect();
-      // If the cached provider is not cleared,
-      // WalletConnect will default to the existing session
-      // and does not allow to re-scan the QR code with a new wallet.
-      // Depending on your use case you may want or want not his behavir.
-      await web3Modal.clearCachedProvider();
+export const disconnect = async () => {
+   if (!web3Modal) {
+      web3Modal = new Web3Modal({
+         cacheProvider: true,
+         providerOptions,
+      });
    }
-   provider = null;
-   web3Modal = null;
-   console.log("out");
+   await web3Modal.clearCachedProvider();
+   if (provider?.disconnect && typeof provider.disconnect === "function") {
+      await provider.disconnect();
+   }
 };

@@ -6,12 +6,13 @@ export const DispatchContext = createContext();
 
 const modal = "";
 const user = {};
-const initialState = { user, modal };
-const buildIntialPersistedState = (stateInCookie) => {
-   console.log("stateInCookie", stateInCookie);
-   const intialPersistedState = { ...initialState, ...stateInCookie };
-   return intialPersistedState;
-};
+const web3Auth = { provider: null, web3Provider: null };
+const initialState = { user, modal, web3Auth };
+
+const buildIntialPersistedState = (stateInCookie) => ({
+   ...initialState,
+   ...stateInCookie,
+});
 
 export const reducer = (globalState, action) => {
    switch (action.type) {
@@ -25,8 +26,14 @@ export const reducer = (globalState, action) => {
          };
       case "STORE":
          return { ...globalState, ...action.payload };
+      // case "SET_WEB3_AUTH":
+      //    return { ...globalState, web3Auth: action.payload };
+      // case "RESET_WEB3_AUTH":
+      //    return { ...globalState, web3Auth };
       case "SET_USER":
          return { ...globalState, user: action.payload };
+      case "RESET_USER":
+         return { ...globalState, user };
       case "SET_MODAL":
          return { ...globalState, modal: action.payload || "" };
       default:
@@ -39,7 +46,9 @@ export const GlobalStateProvider = ({ children, persistedState }) => {
    const [globalState, dispatch] = useReducer(reducer, intialPersistedState);
 
    useEffect(() => {
-      setCookie("persistedState", JSON.stringify(globalState));
+      const currentState = globalState;
+      delete currentState.web3Auth;
+      setCookie("persistedState", JSON.stringify(currentState));
    }, [globalState]);
 
    return (
