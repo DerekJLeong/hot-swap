@@ -69,7 +69,7 @@ export const createNft = async (url) => {
 
    /* create the item */
    const nftContract = new ethers.Contract(NFT_ADDRESS, NFT.abi, signer);
-   let transaction = await nftContract.createToken(url);
+   let transaction = await nftContract.mintToken(url);
    const transactionCompleted = await transaction.wait();
    const event = transactionCompleted.events[0];
    const value = event.args[2];

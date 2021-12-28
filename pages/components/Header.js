@@ -77,9 +77,14 @@ const Header = ({}) => {
             <Link href="/">
                <a className="mr-6 font-semibold text-l text-orange-500">Home</a>
             </Link>
+            <Link href="/market">
+               <a className="mr-6 font-semibold text-l text-orange-500">
+                  Marketplace
+               </a>
+            </Link>
             <Link href="/me">
                <a className="mr-6 font-semibold text-l text-orange-500">
-                  My Assets
+                  My Collection
                </a>
             </Link>
             <Link href="/create">

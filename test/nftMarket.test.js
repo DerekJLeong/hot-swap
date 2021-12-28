@@ -21,8 +21,8 @@ describe("NFTMarket", function () {
       const auctionPrice = ethers.utils.parseUnits("1", "ether");
       const token1 = "https://www.mytokenlocation1.com";
       const token2 = "https://www.mytokenlocation2.com";
-      await nft.createToken(token1);
-      await nft.createToken(token2);
+      await nft.mintToken(token1);
+      await nft.mintToken(token2);
       await market.createMarketItem(nftContractAddress, 1, 0, {
          value: listingPriceString,
       });
@@ -32,7 +32,7 @@ describe("NFTMarket", function () {
 
       // Fetch newly created NFTs on the market
       const createdNfts = await market.fetchMyItems();
-      console.log("Created NFTs", createdNfts);
+      // console.log("Created NFTs", createdNfts);
       expect(createdNfts.length).to.equal(2);
 
       //List Item For Sale On Market
@@ -43,7 +43,7 @@ describe("NFTMarket", function () {
       });
       const marketItems1 = await market.fetchMarketItems();
       expect(marketItems1.length).to.equal(2);
-      console.log("Item Listed For Sale", marketItems1);
+      // console.log("Item Listed For Sale", marketItems1);
 
       // Execute Market Sale of Listed Item
       const [_, buyerAddress] = await ethers.getSigners();
@@ -54,7 +54,7 @@ describe("NFTMarket", function () {
          });
       const marketItems2 = await market.fetchMarketItems();
       expect(marketItems2.length).to.equal(1);
-      console.log("Item Sale Executed", marketItems2);
+      // console.log("Item Sale Executed", marketItems2);
       const marketItemsWithUri = await Promise.all(
          marketItems2.map(
             async ({ price, tokenId, seller, owner, forSale, sold }) => {
@@ -73,7 +73,7 @@ describe("NFTMarket", function () {
          )
       );
       const firstMarketItem = marketItemsWithUri[0];
-      console.log("First Market Item", firstMarketItem);
+      // console.log("First Market Item", firstMarketItem);
       expect(firstMarketItem.tokenUri).to.equal(token2);
       expect(firstMarketItem.tokenId).to.equal("2");
       expect(firstMarketItem.forSale).to.equal(false);

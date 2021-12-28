@@ -115,10 +115,10 @@ contract Market is ReentrancyGuard {
         uint256 tokenId = idToMarketItem[itemId].tokenId;
         require(msg.value == price, "Asking price required");
 
-        idToMarketItem[itemId].seller.transfer(msg.value);
-        IERC721(nftContract).transferFrom(address(this), msg.sender, tokenId);
         idToMarketItem[itemId].owner = payable(msg.sender);
         idToMarketItem[itemId].sold = true;
+        idToMarketItem[itemId].seller.transfer(msg.value);
+        IERC721(nftContract).transferFrom(address(this), msg.sender, tokenId);
         _itemsSold.increment();
         payable(owner).transfer(listingPrice);
     }

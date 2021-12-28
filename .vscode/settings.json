@@ -1,0 +1,5 @@
+{
+   "solidity-va.hover": true,
+   "solidity-va.deco.arguments": true,
+   "solidity-va.deco.statevars": false
+}
