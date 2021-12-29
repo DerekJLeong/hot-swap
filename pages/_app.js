@@ -9,7 +9,7 @@ import Header from "./components/Header";
 
 const App = ({ Component, pageProps, persistedState }) => {
    const router = useRouter();
-   const activeUser =
+   const loggedIn =
       !!persistedState.user?.address && !!persistedState.user?.chainId;
 
    // Auto connect to the cached provider or prompt user to login with wallet
@@ -17,13 +17,13 @@ const App = ({ Component, pageProps, persistedState }) => {
    // that we can dispatch actions to gloal state the modal connections
    // must be initiated from the top-most level, so this stays here for now
    useEffect(async () => {
-      if (web3Modal?.cachedProvider || !activeUser) {
+      if (web3Modal?.cachedProvider || !loggedIn) {
          const authData = await connect();
          setCookie(
             "persistedState",
             JSON.stringify({ ...persistedState, user: authData })
          );
-         !activeUser && router.reload();
+         !loggedIn && router.reload();
       }
    }, [connect]);
 
@@ -44,10 +44,11 @@ App.getInitialProps = async ({ ctx }) => {
    // Persists global state on page refresh
    // Check if there a state cookie saved, if cookie is available then use the cookie's value as our initial state
    const cookies = ctx?.req ? ctx.req.headers.cookie : document.cookie;
-   const persistedState = (await getCookie("persistedState", cookies)) || "{}";
+   const stateFromCookie = await getCookie("persistedState", cookies);
+   const stateObject = (stateFromCookie && JSON.parse(stateFromCookie)) || {};
    console.log("persistedState", persistedState);
    return {
-      persistedState: JSON.parse(persistedState),
+      persistedState: stateObject,
    };
 };
 

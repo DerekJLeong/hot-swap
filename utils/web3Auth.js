@@ -37,28 +37,29 @@ const providerOptions = {
    },
 };
 
-export let web3Modal;
 export let connection;
+export let signer;
 export let provider;
+export let web3ModalInstance;
 
 export const connect = async () => {
-   web3Modal = new Web3Modal({
+   web3ModalInstance = new Web3Modal({
       cacheProvider: true,
       providerOptions,
    });
    // connection that is returned when
    // using web3Modal to connect. Can be MetaMask or WalletConnect.
    try {
-      connection = await web3Modal.connect();
+      connection = await web3ModalInstance.connect();
       // We plug the initial `provider` into ethers.js and get back
       // a Web3Provider. This will add on methods from ethers.js and
       // event listeners such as `.on()` will be different.
       provider = new ethers.providers.Web3Provider(connection);
-      const signer = await provider.getSigner();
+      signer = provider.getSigner();
       const address = await signer.getAddress();
       const network = await provider.getNetwork();
       const { chainId } = network;
-      console.log("CONNECTED", chainId, signer, address, provider);
+      console.log("CONNECTED", chainId, signer, address);
 
       return { address, chainId };
    } catch (error) {
@@ -67,13 +68,13 @@ export const connect = async () => {
 };
 
 export const disconnect = async () => {
-   if (!web3Modal) {
-      web3Modal = new Web3Modal({
+   if (!web3ModalInstance) {
+      web3ModalInstance = new Web3Modal({
          cacheProvider: true,
          providerOptions,
       });
    }
-   await web3Modal.clearCachedProvider();
+   await web3ModalInstance.clearCachedProvider();
    if (provider?.disconnect && typeof provider.disconnect === "function") {
       await provider.disconnect();
    }

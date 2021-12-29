@@ -112,7 +112,7 @@ describe("Market Contract Transactions", () => {
       const tokenPrice = 42;
       beforeEach(async () => {
          await hardhatMarket.mint(NON_FUNGIBLE, tokenUri, []);
-         transaction = await hardhatMarket.createItem(1, tokenPrice);
+         transaction = await hardhatMarket.createItem(1, tokenPrice, 0);
          transaction = await transaction.wait();
       });
       it("Can be created", async () => {
@@ -124,6 +124,7 @@ describe("Market Contract Transactions", () => {
             itemId,
             tokenId,
             price,
+            associatedCollectionId,
          ] = transaction.events[1].args;
 
          expect(sold).to.equal(false);
@@ -133,6 +134,7 @@ describe("Market Contract Transactions", () => {
          expect(itemId).to.equal(1);
          expect(tokenId).to.equal(1);
          expect(price).to.equal(tokenPrice);
+         expect(associatedCollectionId).to.equal(0);
          _itemId = itemId;
       });
       it("Can be retrieved by id", async () => {
