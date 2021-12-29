@@ -56,7 +56,7 @@ contract HotSwapMarket is
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() initializer {
-        contractAddress = payable(msg.sender);
+        initialize();
     }
 
     function initialize() public initializer {
@@ -64,6 +64,13 @@ contract HotSwapMarket is
         __Ownable_init();
         __ERC1155Burnable_init();
         __ERC1155Supply_init();
+
+        contractAddress = payable(msg.sender);
+
+        // Increment counters we dont want to start at 0 in constuctor
+        _collectionIds.increment();
+        _itemIds.increment();
+        _tokenIds.increment();
     }
 
     // mappings
