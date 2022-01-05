@@ -40,3 +40,13 @@ Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_
 ```shell
 npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
 ```
+
+# Install and Run Locally
+
+1- npm i
+2- create copy of .env
+2- npx hardhat node
+3- open another terminal window
+4- npm run deploy-local
+5- copy the deployed 'HotSwapMarket' address to to .env
+6- npm run dev
