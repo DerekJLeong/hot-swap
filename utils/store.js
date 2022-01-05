@@ -5,14 +5,24 @@ export const GlobalStateContext = createContext();
 export const DispatchContext = createContext();
 
 const modal = "";
-const user = {};
-const web3Auth = { provider: null, web3Provider: null };
-const initialState = { user, modal, web3Auth };
+const emptyUser = { address: "", chainId: "" };
+// const web3Auth = {
+//    web3ModalInstance: null,
+//    connection: null,
+//    provider: null,
+//    signer: null,
+// };
+const contract = {};
+const initialState = { user: emptyUser, modal, contract };
 
-const buildIntialPersistedState = (stateInCookie) => ({
-   ...initialState,
-   ...stateInCookie,
-});
+const buildIntialPersistedState = (user, contract) => {
+   const initialState = window && window.localStorage.getItem("persistedState");
+   return {
+      ...initialState,
+      user,
+      contract,
+   };
+};
 
 export const reducer = (globalState, action) => {
    switch (action.type) {
@@ -26,8 +36,8 @@ export const reducer = (globalState, action) => {
          };
       case "STORE":
          return { ...globalState, ...action.payload };
-      // case "SET_WEB3_AUTH":
-      //    return { ...globalState, web3Auth: action.payload };
+      case "SET_CONTRACT":
+         return { ...globalState, contract: action.payload };
       // case "RESET_WEB3_AUTH":
       //    return { ...globalState, web3Auth };
       case "SET_USER":
@@ -41,14 +51,25 @@ export const reducer = (globalState, action) => {
    }
 };
 
-export const GlobalStateProvider = ({ children, persistedState }) => {
-   const intialPersistedState = buildIntialPersistedState(persistedState);
-   const [globalState, dispatch] = useReducer(reducer, intialPersistedState);
+export const GlobalStateProvider = ({
+   children,
+   persistedUser,
+   marketContract,
+}) => {
+   const [globalState, dispatch] = useReducer(reducer, initialState);
 
    useEffect(() => {
-      const currentState = globalState;
-      delete currentState.web3Auth;
-      setCookie("persistedState", JSON.stringify(currentState));
+      const intialPersistedState = buildIntialPersistedState(
+         persistedUser,
+         marketContract
+      );
+      dispatch({ type: "STORE", payload: intialPersistedState });
+   }, [persistedUser, marketContract]);
+   useEffect(() => {
+      const state = globalState;
+      delete state.user;
+      delete state.contract;
+      localStorage.setItem("peristedState", JSON.stringify(state));
    }, [globalState]);
 
    return (

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useGlobalState, useDispatch } from "/utils/store";
-import { connection, disconnect } from "/utils/web3Auth";
+import { connection, connect, disconnect } from "/utils/web3Auth";
 import { removeCookie } from "/utils/cookie";
 import Link from "next/link";
 
@@ -19,6 +19,17 @@ const Header = ({}) => {
       router.push("/");
    };
 
+   // useEffect(async () => {
+   //    if (web3ModalInstance?.cachedProvider) {
+   //       console.log("WOOOOOOOW");
+   //       const authData = await connect();
+   //       setCookie(
+   //          "persistedState",
+   //          JSON.stringify({ ...persistedState, user: authData })
+   //       );
+   //       !loggedIn && router.reload();
+   //    }
+   // }, [connect]);
    // A `provider` should come with EIP-1193 events. We'll listen for those events
    // here so that when a user switches accounts or networks, we can update the
    // local React state with that new information.

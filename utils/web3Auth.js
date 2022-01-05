@@ -4,6 +4,7 @@ import Web3Modal from "web3modal";
 import WalletLink from "walletlink";
 import { ethers } from "ethers";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import HotSwapMarket from "../artifacts/contracts/HotSwapMarket.sol/HotSwapMarket.json";
 
 const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID || "";
 const providerOptions = {
@@ -59,18 +60,55 @@ export const connect = async () => {
       const address = await signer.getAddress();
       const network = await provider.getNetwork();
       const { chainId } = network;
-      console.log("CONNECTED", chainId, signer, address);
-
-      return { address, chainId };
+      const HotSwapMarketContract = new ethers.Contract(
+         process.env.HOTSWAP_ADDRESS,
+         HotSwapMarket.abi,
+         signer
+      );
+      return {
+         user: { address, chainId },
+         web3Auth: { web3ModalInstance, connection, provider, signer },
+         HotSwapMarketContract,
+      };
    } catch (error) {
       return console.error("Could not get a wallet connection", error);
    }
+};
+
+export const connectCachedProvider = async () => {
+   web3ModalInstance = new Web3Modal({
+      cacheProvider: true,
+      providerOptions,
+   });
+   const cachedProviderName = JSON.parse(
+      localStorage.getItem("WEB3_CONNECT_CACHED_PROVIDER")
+   );
+   const cachedProvider = web3ModalInstance.providerController.providers.find(
+      ({ id }) => id === cachedProviderName
+   );
+   connection = await cachedProvider.connector(); // Some connector may need providerPackage and opts
+   provider = new ethers.providers.Web3Provider(connection); // If you use web3, then const web3 = new Web3(proxy);
+   signer = provider.getSigner();
+   const address = await signer.getAddress();
+   const network = await provider.getNetwork();
+   const { chainId } = network;
+   const HotSwapMarketContract = new ethers.Contract(
+      process.env.HOTSWAP_ADDRESS,
+      HotSwapMarket.abi,
+      signer
+   );
+   return {
+      user: { address, chainId },
+      web3Auth: { web3ModalInstance, connection, provider, signer },
+      HotSwapMarketContract,
+   };
 };
 
 export const disconnect = async () => {
    if (!web3ModalInstance) {
       web3ModalInstance = new Web3Modal({
          cacheProvider: true,
+         disableInjectedProvider: true,
          providerOptions,
       });
    }

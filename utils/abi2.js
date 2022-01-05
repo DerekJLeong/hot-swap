@@ -1,5 +1,4 @@
 import { create as ipfsHttpClient } from "ipfs-http-client";
-import { create as ipfsHttpClient } from "ipfs-http-client";
 import { ethers } from "ethers";
 import axios from "axios";
 import HotSwapMarket from "../artifacts/contracts/HotSwapMarket.sol/HotSwapMarket.json";
@@ -12,17 +11,31 @@ import {
 
 const IPFS_CLIENT_URL = process.env.IPFS_CLIENT_URL || "";
 const IPFS_BASE_URL = process.env.IPFS_BASE_URL || "";
-const MARKET_ADDRESS = process.env.MARKET_ADDRESS || "";
+const HOTSWAP_ADDRESS = process.env.HOTSWAP_ADDRESS || "";
 const RPC_ENDPOINT = process.env.APP_PUBLIC_WORKSPACE_URL || "";
 const ipfsClient = IPFS_CLIENT_URL && ipfsHttpClient(IPFS_CLIENT_URL);
-const HotSwapMarketContract = new ethers.Contract(
-   MARKET_ADDRESS,
-   HotSwapMarket.abi,
-   signer
-);
-const listingPrice = await marketContract.getListingPrice().toString();
-const mintingPrice = await marketContract.getMintingPrice().toString();
-console.log("SIGNER", signer);
+const HotSwapMarketContract =
+   signer && new ethers.Contract(HOTSWAP_ADDRESS, HotSwapMarket.abi, signer);
+
+export const getListingPrice = async () => {
+   try {
+      const listingPrice =
+         await HotSwapMarketContract.getListingPrice().toString();
+      return listingPrice;
+   } catch (error) {
+      console.error("Error uploading file: ", error);
+   }
+};
+
+export const getMintingPrice = async () => {
+   try {
+      const mintingPrice =
+         await HotSwapMarketContract.getMintingPrice().toString();
+      return mintingPrice;
+   } catch (error) {
+      console.error("Error uploading file: ", error);
+   }
+};
 
 export const ipfsClientAdd = async (
    fileData,
@@ -37,15 +50,23 @@ export const ipfsClientAdd = async (
             }))) ||
          (await ipfsClient.add(fileData));
       const fileLocation = `${IPFS_BASE_URL}${addedFile.path}`;
-      console.log("fileLocation", fileLocation);
       return fileLocation;
    } catch (error) {
       console.error("Error uploading file: ", error);
    }
 };
 
-export const mintToken = async (amount = 1, itemUri) => {
+export const mintToken = async (itemUri, amount = 1) => {
    try {
+      const HotSwapMarketContract = new ethers.Contract(
+         HOTSWAP_ADDRESS,
+         HotSwapMarket.abi,
+         signer
+      );
+      const mintingPrice = await getMintingPrice();
+      console.log("here", amount, itemUri, [], {
+         value: mintingPrice,
+      });
       const transaction = await HotSwapMarketContract.mintToken(
          amount,
          itemUri,
@@ -54,7 +75,9 @@ export const mintToken = async (amount = 1, itemUri) => {
             value: mintingPrice,
          }
       );
+      console.log("transaction", transaction);
       const transactionCompleted = await transaction.wait();
+      console.log("transactionCompleted", transactionCompleted);
       const event = transactionCompleted.events[0];
       const value = event.args[2];
       const tokenId = value.toNumber();
@@ -66,9 +89,14 @@ export const mintToken = async (amount = 1, itemUri) => {
 
 export const createMarketItem = async (tokenId, price) => {
    try {
+      const HotSwapMarketContract = new ethers.Contract(
+         HOTSWAP_ADDRESS,
+         HotSwapMarket.abi,
+         signer
+      );
       const priceParsed = ethers.utils.parseUnits(price, "ether");
       const itemId = await HotSwapMarketContract.createMarketItem(
-         MARKET_ADDRESS,
+         HOTSWAP_ADDRESS,
          tokenId,
          priceParsed
       );
@@ -80,8 +108,9 @@ export const createMarketItem = async (tokenId, price) => {
 
 export const listItemForSale = async (itemId, price) => {
    try {
+      const listingPrice = await getListingPrice();
       const priceParsed = ethers.utils.parseUnits(price.toString(), "ether");
-      const transaction = await marketContract.listItemForSale(
+      const transaction = await HotSwapMarketContract.listItemForSale(
          itemId,
          priceParsed,
          {
@@ -96,9 +125,13 @@ export const listItemForSale = async (itemId, price) => {
 
 export const removeItemFromSale = async (tokenId) => {
    try {
-      const transaction = await marketContract.removeSaleListing(tokenId, {
-         value: listingPrice,
-      });
+      const listingPrice = await getListingPrice();
+      const transaction = await HotSwapMarketContract.removeSaleListing(
+         tokenId,
+         {
+            value: listingPrice,
+         }
+      );
       await transaction.wait();
    } catch (error) {
       console.error(error);
@@ -111,8 +144,8 @@ export const executeItemSale = async (marketItem) => {
          marketItem.price.toString(),
          "ether"
       );
-      const transaction = await marketContract.executeMarketSale(
-         MARKET_ADDRESS,
+      const transaction = await HotSwapMarketContract.executeMarketSale(
+         HOTSWAP_ADDRESS,
          marketItem.itemId,
          {
             value: price,
@@ -126,7 +159,7 @@ export const executeItemSale = async (marketItem) => {
 
 export const fetchItem = async (itemId) => {
    try {
-      const fetchedItem = await provider.getCollection(itemId);
+      const fetchedItem = await HotSwapMarketContract.getCollection(itemId);
       return fetchedItem;
    } catch (error) {
       console.error(error);
@@ -189,12 +222,13 @@ export const mapFetchedItems = async (items) => {
 export const fetchMarketItems = async () => {
    try {
       // const provider = new ethers.providers.JsonRpcProvider(RPC_ENDPOINT);
-      // const marketContract = new ethers.Contract(
-      //    MARKET_ADDRESS,
+      // const HotSwapMarketContract = new ethers.Contract(
+      //    HOTSWAP_ADDRESS,
       //    Market.abi,
       //    provider
       // );
-      const marketItemsFromResponse = await marketContract.fetchMarketItems();
+      const marketItemsFromResponse =
+         await HotSwapMarketContract.fetchMarketItems();
       const mappedItems = await mapFetchedItems(marketItemsFromResponse);
       return mappedItems;
    } catch (error) {
@@ -204,7 +238,7 @@ export const fetchMarketItems = async () => {
 
 export const fetchMyItems = async () => {
    try {
-      const myItems = await marketContract.fetchMyItems();
+      const myItems = await HotSwapMarketContract.fetchMyItems();
       const myItemsMapped = await mapFetchedItems(myItems);
       return myItemsMapped;
    } catch (error) {
@@ -214,13 +248,14 @@ export const fetchMyItems = async () => {
 
 export const createMarketCollection = async (tokenId, price) => {
    try {
+      const mintingPrice = await getMintingPrice();
       const priceParsed = ethers.utils.parseUnits(price, "ether");
       const collectionId = await HotSwapMarketContract.createMarketItem(
-         MARKET_ADDRESS,
+         HOTSWAP_ADDRESS,
          tokenId,
          priceParsed,
          {
-            value: mintingPriceString,
+            value: mintingPrice,
          }
       );
       return collectionId;
@@ -231,14 +266,17 @@ export const createMarketCollection = async (tokenId, price) => {
 
 export const removeItemFromCollection = async (collectionId, itemId) => {
    try {
-      await provider.removeItemFromCollection(collectionId, itemId);
+      await HotSwapMarketContract.removeItemFromCollection(
+         collectionId,
+         itemId
+      );
    } catch (error) {
       console.error(error);
    }
 };
 export const addItemToCollection = async (collectionId, itemId) => {
    try {
-      await provider.addItemToCollection(collectionId, itemId);
+      await HotSwapMarketContract.addItemToCollection(collectionId, itemId);
    } catch (error) {
       console.error(error);
    }
@@ -246,10 +284,8 @@ export const addItemToCollection = async (collectionId, itemId) => {
 
 export const fetchCollectionItem = async (collectionId, itemId) => {
    try {
-      const fetchedCollectionItem = await provider.getCollectionItem(
-         collectionId,
-         itemId
-      );
+      const fetchedCollectionItem =
+         await HotSwapMarketContract.getCollectionItem(collectionId, itemId);
       return fetchedCollectionItem;
    } catch (error) {
       console.error(error);
@@ -258,7 +294,9 @@ export const fetchCollectionItem = async (collectionId, itemId) => {
 
 export const fetchCollection = async (collectionId) => {
    try {
-      const fetchedCollection = await provider.getCollection(collectionId);
+      const fetchedCollection = await HotSwapMarketContract.getCollection(
+         collectionId
+      );
       return fetchedCollection;
    } catch (error) {
       console.error(error);
@@ -267,9 +305,8 @@ export const fetchCollection = async (collectionId) => {
 
 export const getAmountOfCollectionItems = async (collectionId) => {
    try {
-      const amountOfItems = await provider.getAmountOfCollectionItems(
-         collectionId
-      );
+      const amountOfItems =
+         await HotSwapMarketContract.getAmountOfCollectionItems(collectionId);
       return amountOfItems;
    } catch (error) {
       console.error(error);

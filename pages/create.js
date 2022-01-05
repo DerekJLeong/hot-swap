@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import {
-   ipfsClientAdd,
-   ipfsClientAddWithProgress,
-   createNft,
-   createMarketItem,
-} from "/utils/abi";
+// import {
+// ipfsClientAdd,
+// ipfsClientAddWithProgress,
+// createNft,
+// createMarketItem,
+// } from "/utils/abi";s
+import { ipfsClientAdd, mintToken, createMarketItem } from "/utils/abi2";
 
 const Create = () => {
    const router = useRouter();
@@ -18,7 +19,7 @@ const Create = () => {
       collection: "",
       addedKey: "",
       addedValue: "",
-      price: "",
+      // price: "",
    });
    const [itemProperties, setItemProperties] = useState({});
    const handleFormInputChange = (event) =>
@@ -26,7 +27,7 @@ const Create = () => {
 
    const handleFileChange = async (event) => {
       const fileData = event.target.files[0];
-      const fileLocation = await ipfsClientAddWithProgress(fileData);
+      const fileLocation = await ipfsClientAdd(fileData, true);
       setFileUrl(fileLocation);
    };
 
@@ -48,11 +49,14 @@ const Create = () => {
       //TODO LOADING MODAL step 1
       const nftLocation = await ipfsClientAdd(fileData);
       //TODO LOADING MODAL step 2
-      const tokenId = await createNft(nftLocation);
+
+      console.log("nftLocation", nftLocation);
+      const tokenId = await mintToken(nftLocation);
       //TODO LOADING MODAL step 3
-      await createMarketItem(tokenId, initialPrice);
+      const itemId = await createMarketItem(tokenId, initialPrice);
       //TODO LOADING MODAL steps completed
-      router.push("/me");
+      console.log("itemId", itemId);
+      // router.push("/me");
    };
 
    const handleAddKeyValue = () => {
@@ -63,7 +67,6 @@ const Create = () => {
       setFormInput({ ...formInput, addedKey: "", addedValue: "" });
    };
 
-   console.log("HERE", itemProperties, formInput);
    return (
       <div className="flex justify-center">
          <form className="w-1/2 flex flex-col pb-12">
@@ -129,13 +132,13 @@ const Create = () => {
                )}
                <div></div>
             </div>
-            <input
+            {/* <input
                name="price"
                value={formInput.price}
                placeholder="Price"
                className="mt-2 border rounded p-4"
                onChange={handleFormInputChange}
-            />
+            /> */}
 
             <input
                type="file"

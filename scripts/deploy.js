@@ -28,7 +28,7 @@ async function main() {
    const HotSwapMarketContract = await hre.ethers.getContractFactory(
       "HotSwapMarket"
    );
-   const HotSwapMarket = await HotSwapMarketContract.deploy(Market.address);
+   const HotSwapMarket = await HotSwapMarketContract.deploy();
    await HotSwapMarket.deployed();
    console.log("HotSwapMarket:", HotSwapMarket.address);
 }
